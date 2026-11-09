@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: table_thyme
+      MYSQL_USER: tablethyme
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+    volumes:
+      - hotel-data:/var/lib/mysql
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql -u"$$MYSQL_USER" -e "SELECT 1" table_thyme']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  app:
+    build: .
+    ports:
+      - '8080:8080'
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/table_thyme?connectionTimeZone=Asia/Kolkata
+      DB_USER: tablethyme
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      HOTEL_ZONE: Asia/Kolkata
+    depends_on:
+      mysql:
+        condition: service_healthy
+volumes:
+  hotel-data:
